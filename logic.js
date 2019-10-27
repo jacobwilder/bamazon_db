@@ -3,14 +3,8 @@ var mysql = require("mysql");
 
 var connection = mysql.createConnection({
     host: "localhost",
-  
-    // Your port; if not 3306
     port: 3306,
-  
-    // Your username
     user: "root",
-  
-    // Your password
     password: "26Gamers8!",
     database: "bamazon_db"
   });
@@ -18,22 +12,72 @@ var connection = mysql.createConnection({
   connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId + "\n");
-    connection.query("SELECT * FROM products", function(err, res) {
-        if (err) throw err;
-        console.table(res);
-        console.log("\n\n");
-    })
-    startPrompt();
+    displayTable(connection)
   });
 
-  function startPrompt() {
-        inquirer.prompt([
-          {name: "product",
-           message: "What is the ID of the product you are searching for?",
-           type: "input"}
-      ]).then(function(error, answer) {
-            if (error) throw error;
-            console.log(answer);
 
-      })
+  // DISPLAYS TABLE DATA
+
+  function displayTable(connection) {
+    connection.query("SELECT * FROM products;", (err, res) => {
+      if (err) throw err;
+      console.table(res);
+      startPrompt(connection);
+    });
+  }
+
+  // BEGINS USER PROMPT, LOGS DATA
+
+  function startPrompt(connection) {
+    inquirer.prompt(
+      [
+          {
+            name: "product",
+            message: "What is the ID of the product you are searching for?",
+            type: "input",
+            validate: (id) => {
+              if (id >= 1 && id <= 10) {
+                return true;
+              }
+                return false;
+            }
+          },
+          {
+            name: "quantity",
+            message: "How much would you like to buy?",
+            type: "input"
+          }
+      ]
+    ).then(function(error, answer) {
+      if (error) throw error;
+      connection.query("SELECT stock_quantity WHERE ?;",
+          [
+            {
+              item_id: answer.product
+            }
+          ], (err, res) => {
+            if (err) throw err;
+            var def = res[0].stock_quantity;
+            if (parseInt(def) >= parseInt(answer.quantity)) {
+              connection.query("SELECT stock_quantity, price FROM products WHERE ?;",
+                  [
+                    {
+                      item_id: answer.product
+                    }
+                  ], (err, res) => {
+                    if (err) throw err;
+                    var def = res[0].stock_quantity;
+                    var sum = parseInt(res[0].price * answer.quantity);
+                    console.log("You owe $" + total + "\n");
+                    updateData(parseInt(def), answer.quantity, answer.product, connection);
+                  });
+            } else {
+              console.log("We are low on stock!\n");
+              displayTable(connection);
+            }
+        });
+    });
+  }
+
+  function updateData(def, userQuant, userID, connection) {
   }

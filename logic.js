@@ -29,6 +29,7 @@ var connection = mysql.createConnection({
   // BEGINS USER PROMPT, LOGS DATA
 
   function startPrompt(connection) {
+    
     inquirer.prompt(
       [
           {
@@ -48,13 +49,12 @@ var connection = mysql.createConnection({
             type: "input"
           }
       ]
-    ).then(function(error, answer) {
-      if (error) {console.log("\nERROR FOUND\n" + error)};
+    ).then(function(answer) {
      
      // HERE IS THE ERROR FIX THIS A S A P
      
-      console.log(answer.product + " " + answer.quantity);
-      connection.query("SELECT stock_quantity WHERE ?;",
+      console.log(answer.product, answer.quantity);
+      connection.query("SELECT stock_quantity FROM products WHERE ?;",
           [
             {
               item_id: answer.product
@@ -84,15 +84,18 @@ var connection = mysql.createConnection({
   }
 
   function updateData(def, userQ, userID, connection) {
-    var query = connection.query(
-        "UPDATE products SET ?;",
+    connection.query(
+        "UPDATE products SET ? WHERE ?;",
         [
             {
               stock_quantity: parseInt(def) - parseInt(userQ)
             },
+            {
+              item_id: userID
+            }
         ], function(err, res) {
           if (err) throw err;
-          console.log(res.affectedRows + " has been updated!\n");
+          console.log(res.affectedRows + " item has been updated!\n");
           displayTable(connection);
           startPrompt(connection);
         }

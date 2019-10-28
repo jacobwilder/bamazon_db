@@ -49,7 +49,11 @@ var connection = mysql.createConnection({
           }
       ]
     ).then(function(error, answer) {
-      if (error) throw error;
+      if (error) {console.log("\nERROR FOUND\n" + error)};
+     
+     // HERE IS THE ERROR FIX THIS A S A P
+     
+      console.log(answer.product + " " + answer.quantity);
       connection.query("SELECT stock_quantity WHERE ?;",
           [
             {
@@ -68,7 +72,7 @@ var connection = mysql.createConnection({
                     if (err) throw err;
                     var def = res[0].stock_quantity;
                     var sum = parseInt(res[0].price * answer.quantity);
-                    console.log("You owe $" + total + "\n");
+                    console.log("You owe $" + sum + "\n");
                     updateData(parseInt(def), answer.quantity, answer.product, connection);
                   });
             } else {
@@ -79,5 +83,19 @@ var connection = mysql.createConnection({
     });
   }
 
-  function updateData(def, userQuant, userID, connection) {
+  function updateData(def, userQ, userID, connection) {
+    var query = connection.query(
+        "UPDATE products SET ?;",
+        [
+            {
+              stock_quantity: parseInt(def) - parseInt(userQ)
+            },
+        ], function(err, res) {
+          if (err) throw err;
+          console.log(res.affectedRows + " has been updated!\n");
+          displayTable(connection);
+          startPrompt(connection);
+        }
+    )
+
   }
